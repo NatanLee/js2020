@@ -1,3 +1,25 @@
+//API from https://fakestoreapi.com/
+const API = 'https://fakestoreapi.com/products/1';
+/*
+let getRequest = (url, cb) => {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        if (xhr.status !== 200) {
+          console.log('Error');
+        } else {
+          //cb(xhr.responseText);
+          console.log(xhr.responseText);
+        }
+      }
+    };
+    xhr.send();
+};
+getRequest(API);
+*/
+
+
 class ProductList{
     constructor(container = '.products'){
         this.container = container;

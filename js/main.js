@@ -1,5 +1,5 @@
 //API from https://fakestoreapi.com/
-const API = 'https://fakestoreapi.com/products/1';
+const API = 'https://fakestoreapi.com/products';
 /*
 let getRequest = (url, cb) => {
     let xhr = new XMLHttpRequest();
@@ -25,17 +25,34 @@ class ProductList{
         this.container = container;
         this.goods = [];
         this.allProducts = [];
-        this._fetchProducts();
-        this._render();        
+        //this._fetchProducts();
+        this._getProducts()
+          .then(data => {
+            console.log(data);
+            //this.goods = data;
+            this.goods = [...data];
+            console.log(this.goods);
+            this._render();
+
+          });
+        //this._render();        
     }
-    _fetchProducts(){
-        this.goods = [
+    /*_fetchProducts(){      
+      this.goods = [
             {id: 1, title: 'Notebook', price: 1000},
             {id: 2, title: 'Mouse', price: 100},
             {id: 3, title: 'Keyboard', price: 250},
             {id: 4, title: 'Gamepad', price: 150},
         ];
+    }*/
+    _getProducts(){
+      return fetch(`${API}`)
+        .then(result => result.json())
+        .catch(error => {
+          console.log(error);
+        })
     }
+
     _render(){
         const block = document.querySelector(this.container);
         for (let product of this.goods){
@@ -51,7 +68,7 @@ class ProductItem{
         this.title = product.title;
         this.price = product.price;
         this.id = product.id;
-        this.img = img;
+        this.img = product.image;
     }
 
     render(){

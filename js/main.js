@@ -11,8 +11,7 @@ class List{
     this.url = url;
     this.goods = [];
     this.allProducts = [];
-    this.filtered = [];
-    this.currentCart = [];
+    this.filtered = [];   
     this._init();
   }
 
@@ -40,15 +39,14 @@ class List{
   }
   
   render(){
-    const block = document.querySelector(this.container);
+    const block = document.querySelector(this.container);   
     for (let product of this.goods){
         //console.log(this.constructor.name);
-        const productObj = new this.list[this.constructor.name](product);
-        //console.log(productObj);
-        this.allProducts.push(productObj);
-        //console.log(this.allProducts);
+        const productObj = new this.list[this.constructor.name](product);        
+        this.allProducts.push(productObj);        
         block.insertAdjacentHTML('beforeend', productObj.render());
     }
+    //console.log(this.allProducts);
   }
   
   /**
@@ -56,7 +54,16 @@ class List{
    * @param value - поисковый запрос
    */
   filter(value){
-
+    const regexp = new RegExp(value, 'i');
+    this.filtered = this.allProducts.filter(product => regexp.test(product.product_name));
+    this.allProducts.forEach(el => {
+      const block = document.querySelector(`.product-item[data-id = "${el.id_product}"]`);
+      if(!this.filtered.includes(el)){
+        block.classList.add('invisible');
+      }else{
+        block.classList.remove('invisible');
+      }
+    })
   }
   
   /**
@@ -64,7 +71,7 @@ class List{
    * @returns {*|number}
    */
   calcSum(){
-
+    return this.allProducts.reduce((accum, item) => accum += item.price, 0);
   }
 
   _init(){
@@ -116,7 +123,7 @@ class ProductsList extends List{
     });
     document.querySelector('.search-form').addEventListener('submit', e =>{
       e.preventDefault();
-      this.filter(document.querySelector('.serach-field').value)
+      this.filter(document.querySelector('.search-field').value)
     });
   }
 }
@@ -128,21 +135,25 @@ class Cart extends List{
     super(url, container);
     this.getJson()
       .then(data => {
+        //console.log(data.products);
         this._showCart(data.products);
       });
   }
-
+/**
+ * [{INT productId, INT quantity},]
+ */
   _showCart(cartProducts){
-    console.log(cartProducts);    
     this.getJson(`${API}products`)
-      .then(data => {        
-        this.currentCart = cartProducts.map(cartProd => {
+      .then(data => {  
+        //console.log(data);      
+        let currentCart = cartProducts.map(cartProd => {
           let find = data.find(product => product.id == cartProd.productId);
-          find.quantity = cartProd.quantity;          
+          find.quantity = cartProd.quantity;
+          find.id_product = cartProd.productId;          
           return find;
         });
-        //console.log(this.currentCart);
-        this.handleData(this.currentCart);         
+        //console.log(currentCart);
+        this.handleData(currentCart);         
       });
   }
 
@@ -151,16 +162,49 @@ class Cart extends List{
    * @param element
    */
   addProduct(element){
-    //нужно добавить скрипт для изменения данных на сервере
-    console.log(this.currentCart);
-    console.log(this.allProducts);
+    //нужно добавить скрипт для изменения данных на сервере    
     let productId = +element.dataset['id'];
+    //console.log(this.allProducts);
     let find = this.allProducts.find(product => product.id_product === productId);
     if(find){
       find.quantity++;
       this._updateCart(find);
+    }else{
+      let product = [{
+        productId: productId,       
+        quantity: 1
+      }];
+      this._showCart(product);
     }
-    console.log(productId);
+  }
+
+  /**
+   * удаление товара
+   * @param element
+   */
+  removeProduct(element){
+    //нужно добавить скрипт для изменения данных на сервере       
+    let productId = +element.dataset['id'];
+    //console.log(this.allProducts);
+    let find = this.allProducts.find(product => product.id_product === productId);
+    if(find.quantity > 1){ // если товара > 1, то уменьшаем количество на 1
+      find.quantity--;
+      this._updateCart(find);
+    } else { // удаляем
+      this.allProducts.splice(this.allProducts.indexOf(find), 1);
+      document.querySelector(`.cart-item[data-id="${productId}"]`).remove();
+    }       
+  }
+
+  /**
+   * обновляем данные корзины
+   * @param product
+   * @private
+   */
+  _updateCart(product){    
+    let block = document.querySelector(`.cart-item[data-id="${product.id_product}"]`);
+    block.querySelector('.product-quantity').textContent = `Quantity: ${product.quantity}`;
+    block.querySelector('.product-price').textContent = `$${product.quantity*product.price}`;
   }
 
   _init(){
@@ -177,11 +221,9 @@ class Cart extends List{
 
 class CartItem extends Item{
   constructor(el, img = 'https://placehold.it/50x100'){
-    super(el, img);    
-    this.id_product = el.productId;
+    super(el, img);
     this.quantity = el.quantity;
     //console.log(this);
-
   }
 
 
@@ -197,11 +239,10 @@ class CartItem extends Item{
               </div>
               <div class = "right-block">
                 <p class = "product-price">$${this.quantity*this.price}</p>
-                <button class = "del-btn" data-id = "this.id_product">Удалить</button>
+                <button class = "del-btn" data-id = "${this.id_product}">Удалить</button>
               </div>
             </div>`
   }
-
 }
 
 const list2 = {
